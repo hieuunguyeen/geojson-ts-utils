@@ -1,5 +1,7 @@
-GeoJSON Utilities for JavaScript
+GeoJSON Utilities for Typescript
 ================================
+
+# Forked from https://github.com/maxogden/geojson-js-utils and upgrade to be usable with Typescript
 
 Here you will find some functions to help you manipulate and work with GeoJSON
 objects.
