@@ -1,6 +1,6 @@
 {
   "name": "geojson-utils-ts",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "GeoJSON Utilities for Typescript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -24,7 +24,6 @@
   "author": "hieuunguyeen",
   "license": "MIT",
   "devDependencies": {
-    "@types/geojson": "^7946.0.10",
     "@types/jest": "^28.1.6",
     "jest": "^28.1.3",
     "jest-circus": "^28.1.1",
@@ -35,5 +34,7 @@
     "typedoc-plugin-markdown": "^3.13.4",
     "typescript": "^4.7.4"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@types/geojson": "^7946.0.10"
+  }
 }

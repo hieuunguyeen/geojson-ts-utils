@@ -7,8 +7,6 @@ import {
   Geometry,
 } from "geojson";
 
-export * from "geojson";
-
 /**
  * Find the intersection of 2 lines
  *
