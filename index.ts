@@ -4,33 +4,38 @@ import {
   Position,
   Polygon,
   MultiPolygon,
-  GeoJsonObject,
   Geometry,
 } from "geojson";
 
-// adapted from http://www.kevlindev.com/gui/math/intersection/Intersection.js
+export * from "geojson";
+
+/**
+ * Find the intersection of 2 lines
+ *
+ * Adapted from http://www.kevlindev.com/gui/math/intersection/Intersection.js
+ */
 export function lineStringsIntersect(
-  l1: LineString,
-  l2: LineString
+  line1: LineString,
+  line2: LineString
 ): Array<Point> | boolean {
   let intersects: Array<Point> | boolean = [];
-  for (let i = 0; i <= l1.coordinates.length - 2; ++i) {
-    for (let j = 0; j <= l2.coordinates.length - 2; ++j) {
+  for (let i = 0; i <= line1.coordinates.length - 2; ++i) {
+    for (let j = 0; j <= line2.coordinates.length - 2; ++j) {
       const a1 = {
-          x: l1.coordinates[i][1],
-          y: l1.coordinates[i][0],
+          x: line1.coordinates[i][1],
+          y: line1.coordinates[i][0],
         },
         a2 = {
-          x: l1.coordinates[i + 1][1],
-          y: l1.coordinates[i + 1][0],
+          x: line1.coordinates[i + 1][1],
+          y: line1.coordinates[i + 1][0],
         },
         b1 = {
-          x: l2.coordinates[j][1],
-          y: l2.coordinates[j][0],
+          x: line2.coordinates[j][1],
+          y: line2.coordinates[j][0],
         },
         b2 = {
-          x: l2.coordinates[j + 1][1],
-          y: l2.coordinates[j + 1][0],
+          x: line2.coordinates[j + 1][1],
+          y: line2.coordinates[j + 1][0],
         },
         ua_t = (b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x),
         ub_t = (a2.x - a1.x) * (a1.y - b1.y) - (a2.y - a1.y) * (a1.x - b1.x),
@@ -51,9 +56,11 @@ export function lineStringsIntersect(
   return intersects;
 }
 
-// Bounding Box
+/**
+ * Create the bouding box with given coordinates
+ */
 export function boundingBoxAroundPolyCoords(
-  coords: Polygon["coordinates"]
+  coords: Array<Array<Position>>
 ): Array<Position> {
   let xAll: Array<number> = [];
   let yAll: Array<number> = [];
@@ -72,6 +79,9 @@ export function boundingBoxAroundPolyCoords(
   ];
 }
 
+/**
+ * Check whether the point is inside the bounding box
+ */
 export function pointInBoundingBox(
   point: Point,
   bounds: Array<Position>
@@ -84,12 +94,14 @@ export function pointInBoundingBox(
   );
 }
 
-// Point in Polygon
-// http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html#Listing the Vertices
+/**
+ * http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+ * Implement Point inclusion algorithm. Check if point is inside a polygon
+ */
 export function pnpoly(
   x: number,
   y: number,
-  coords: Polygon["coordinates"]
+  coords: Array<Array<Position>>
 ): boolean {
   const vert = [[0, 0]];
 
@@ -116,7 +128,10 @@ export function pnpoly(
   return inside;
 }
 
-export function pointInPolygon(p: Point, poly: Polygon): boolean {
+/**
+ * Check if point is inside a GeoJSON polygon
+ */
+export function pointInPolygon(point: Point, poly: Polygon): boolean {
   if (poly.type !== "Polygon") {
     throw new Error(`Expecting Polygon, got polygon.type=${poly?.type}`);
   }
@@ -126,22 +141,28 @@ export function pointInPolygon(p: Point, poly: Polygon): boolean {
   let insidePoly = false;
 
   if (
-    coords.some((c) => pointInBoundingBox(p, boundingBoxAroundPolyCoords(c)))
+    coords.some((c) =>
+      pointInBoundingBox(point, boundingBoxAroundPolyCoords(c))
+    )
   ) {
     insideBox = true;
   }
 
   if (!insideBox) return false;
 
-  if (coords.some((c) => pnpoly(p.coordinates[1], p.coordinates[0], c))) {
+  if (
+    coords.some((c) => pnpoly(point.coordinates[1], point.coordinates[0], c))
+  ) {
     insidePoly = true;
   }
 
   return insidePoly;
 }
 
-// support multi (but not donut) polygons
-export function pointInMultiPolygon(p: Point, poly: MultiPolygon): boolean {
+/**
+ * Check if point is inside a GeoJSON multipolygon (but not donut)
+ */
+export function pointInMultiPolygon(point: Point, poly: MultiPolygon): boolean {
   if (poly.type !== "MultiPolygon") {
     throw new Error(`Expecting MultiPolygon, got polygon.type=${poly?.type}`);
   }
@@ -153,7 +174,7 @@ export function pointInMultiPolygon(p: Point, poly: MultiPolygon): boolean {
     const coords = coords_array[i];
     for (let j = 0; j < coords.length; j++) {
       if (!insideBox) {
-        if (pointInBoundingBox(p, boundingBoxAroundPolyCoords(coords[j]))) {
+        if (pointInBoundingBox(point, boundingBoxAroundPolyCoords(coords[j]))) {
           insideBox = true;
         }
       }
@@ -161,7 +182,7 @@ export function pointInMultiPolygon(p: Point, poly: MultiPolygon): boolean {
     if (!insideBox) return false;
     for (let j = 0; j < coords.length; j++) {
       if (!insidePoly) {
-        if (pnpoly(p.coordinates[1], p.coordinates[0], coords[j])) {
+        if (pnpoly(point.coordinates[1], point.coordinates[0], coords[j])) {
           insidePoly = true;
         }
       }
@@ -171,15 +192,24 @@ export function pointInMultiPolygon(p: Point, poly: MultiPolygon): boolean {
   return insidePoly;
 }
 
+/**
+ * Convert a number to radius
+ */
 export function numberToRadius(number: number): number {
   return (number * Math.PI) / 180;
 }
+
+/**
+ * Convert a number to degree
+ */
 
 export function numberToDegree(number: number): number {
   return (number * 180) / Math.PI;
 }
 
-// written with help from @tautologe
+/**
+ * Draw a circle polygon using a center point and radius
+ */
 export function drawCircle(
   radiusInMeters: number,
   centerPoint: Point,
@@ -192,15 +222,15 @@ export function drawCircle(
     // 15 sided circle
     poly = [[center[0], center[1]]];
   for (let i = 0; i < steps; i++) {
-    const brng = (2 * Math.PI * i) / steps;
+    const bearing = (2 * Math.PI * i) / steps;
     const lat = Math.asin(
       Math.sin(radCenter[0]) * Math.cos(dist) +
-        Math.cos(radCenter[0]) * Math.sin(dist) * Math.cos(brng)
+        Math.cos(radCenter[0]) * Math.sin(dist) * Math.cos(bearing)
     );
     const lng =
       radCenter[1] +
       Math.atan2(
-        Math.sin(brng) * Math.sin(dist) * Math.cos(radCenter[0]),
+        Math.sin(bearing) * Math.sin(dist) * Math.cos(radCenter[0]),
         Math.cos(dist) - Math.sin(radCenter[0]) * Math.sin(lat)
       );
     poly[i] = [];
@@ -213,7 +243,9 @@ export function drawCircle(
   };
 }
 
-// assumes rectangle starts at lower left point
+/**
+ * Find the centroid of a rectangle, assuming rectangle starts at lower left point
+ */
 export function rectangleCentroid(rectangle: Polygon): Point {
   const bbox = rectangle.coordinates[0];
   const xmin = bbox[0][0],
@@ -228,7 +260,10 @@ export function rectangleCentroid(rectangle: Polygon): Point {
   };
 }
 
-// from http://www.movable-type.co.uk/scripts/latlong.html
+/**
+ * Find distance between 2 points
+ * http://www.movable-type.co.uk/scripts/latlong.html
+ */
 export function pointDistance(pt1: Point, pt2: Point): number {
   const lon1 = pt1.coordinates[0],
     lat1 = pt1.coordinates[1],
@@ -245,8 +280,10 @@ export function pointDistance(pt1: Point, pt2: Point): number {
   return 6371 * c * 1000; // returns meters
 }
 
-// checks if geometry lies entirely within a circle
-// works with Point, LineString, Polygon
+/**
+ * Checks if geometry lies entirely within a circle
+ * works with Point, LineString, Polygon
+ */
 export function geometryWithinRadius(
   geometry: Geometry,
   center: Point,
@@ -276,7 +313,10 @@ export function geometryWithinRadius(
   return true;
 }
 
-// adapted from http://paulbourke.net/geometry/polyarea/javascript.txt
+/**
+ * Find the area of a polygon
+ * http://paulbourke.net/geometry/polyarea/javascript.txt
+ */
 export function area(polygon: Polygon): number {
   let area = 0;
   // TODO: polygon holes at coordinates[1]
@@ -301,7 +341,10 @@ export function area(polygon: Polygon): number {
   return area;
 }
 
-// adapted from http://paulbourke.net/geometry/polyarea/javascript.txt
+/**
+ * Find the centroid of a polygon
+ * Adapted from http://paulbourke.net/geometry/polyarea/javascript.txt
+ */
 export function centroid(polygon: Polygon): Point {
   let f,
     x = 0,
@@ -332,13 +375,16 @@ export function centroid(polygon: Polygon): Point {
   };
 }
 
+/**
+ * Simplify a polygon
+ *
+ * @param source - array of geojson points
+ * @param kink - in metres, kink depth is the height of the triangle abc where a-b and b-c are two consecutive line segments
+ */
 export function simplify(
   source: Array<Point>,
   kink: number = 20
 ): Array<Point> {
-  /* source[] array of geojson points */
-  /* kink	in metres, kinks above this depth kept  */
-  /* kink depth is the height of the triangle abc where a-b and b-c are two consecutive line segments */
   const result: Array<{ lat: number; lng: number }> = source.map(function (o) {
     return {
       lng: o.coordinates[0],
@@ -451,23 +497,29 @@ export function simplify(
   });
 }
 
-// http://www.movable-type.co.uk/scripts/latlong.html#destPoint
-export function destinationPoint(pt: Point, brng: number, dist: number): Point {
-  dist = dist / 6371; // convert dist to angular distance in radians
-  brng = numberToRadius(brng);
+/**
+ * Given a start point, initial bearing, and distance, this will calculate the destina­tion point and final bearing travelling along a (shortest distance) great circle arc.
+ */
+export function destinationPoint(
+  point: Point,
+  bearing: number,
+  distance: number
+): Point {
+  distance = distance / 6371; // convert distance to angular distance in radians
+  bearing = numberToRadius(bearing);
 
-  const lon1 = numberToRadius(pt.coordinates[0]);
-  const lat1 = numberToRadius(pt.coordinates[1]);
+  const lon1 = numberToRadius(point.coordinates[0]);
+  const lat1 = numberToRadius(point.coordinates[1]);
 
   const lat2 = Math.asin(
-    Math.sin(lat1) * Math.cos(dist) +
-      Math.cos(lat1) * Math.sin(dist) * Math.cos(brng)
+    Math.sin(lat1) * Math.cos(distance) +
+      Math.cos(lat1) * Math.sin(distance) * Math.cos(bearing)
   );
   let lon2 =
     lon1 +
     Math.atan2(
-      Math.sin(brng) * Math.sin(dist) * Math.cos(lat1),
-      Math.cos(dist) - Math.sin(lat1) * Math.sin(lat2)
+      Math.sin(bearing) * Math.sin(distance) * Math.cos(lat1),
+      Math.cos(distance) - Math.sin(lat1) * Math.sin(lat2)
     );
   lon2 = ((lon2 + 3 * Math.PI) % (2 * Math.PI)) - Math.PI; // normalise to -180..+180º
 
