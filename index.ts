@@ -7,6 +7,15 @@ import {
   Geometry,
 } from "geojson";
 
+export {
+  Point,
+  LineString,
+  Position,
+  Polygon,
+  MultiPolygon,
+  Geometry,
+} from "geojson";
+
 /**
  * Find the intersection of 2 lines
  *
